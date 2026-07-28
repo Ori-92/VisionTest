@@ -5,30 +5,20 @@ import io
 from PIL import Image, ImageFilter
 import numpy as np
 from pathlib import Path
+import urllib.request # [수정 1] urllib 모듈 임포트 추가
 
+# --- 1. 모델 및 데이터 경로/다운로드 설정 ---
 DATASET_URL = "https://data.vicos.si/datasets/KSDD/KolektorSDD.zip"
-ZIP_PATH = Path("/content/KolektorSDD.zip")
-if not ZIP_PATH.exists():
-    urllib.request.urlretrieve(DATASET_URL, ZIP_PATH)
-
-with zipfile.ZipFile(ZIP_PATH) as archive:
-    image_names = sorted(
-        name for name in archive.namelist()
-        if name.lower().endswith(".jpg")
-    )
-    mask_names = sorted(
-        name for name in archive.namelist()
-        if name.lower().endswith(".bmp")
-    )
-print("원본 이미지:", len(image_names))
-print("정밀 마스크:", len(mask_names))
-
-# --- 1. 모델 및 데이터 경로 설정 ---
-# 깃헙 저장소의 최상단(root)에 파일이 있다고 가정하고 상대 경로로 수정합니다.
 MODEL_PATH = Path("lesson06_vision_model.joblib")
-ZIP_PATH = Path("KolektorSDD.zip")
+ZIP_PATH = Path("KolektorSDD.zip") # [수정 2] /content/ 경로 제거, 현재 폴더에 저장
 
-# --- 2. 헬퍼 함수 정의 (원본 노트북에서 가져옴) ---
+# 데이터셋 파일이 없으면 다운로드 진행
+if not ZIP_PATH.exists():
+    with st.spinner("데이터셋(KolektorSDD.zip)을 다운로드 중입니다. 잠시만 기다려주세요..."):
+        urllib.request.urlretrieve(DATASET_URL, ZIP_PATH)
+        st.success("데이터셋 다운로드 완료!")
+
+# --- 2. 헬퍼 함수 정의 ---
 FEATURE_SIZE = (64, 160)
 
 def quality_metrics(image):
@@ -104,7 +94,7 @@ def get_image_names_from_zip(zip_file_path):
             )
         return image_names
     except FileNotFoundError:
-        st.error(f"데이터 ZIP 파일이 없습니다: {zip_file_path}. 깃헙 저장소에 파일이 있는지 확인해주세요.")
+        st.error(f"데이터 ZIP 파일이 없습니다: {zip_file_path}. 서버에서 다운로드하지 못했습니다.")
         st.stop()
 
 image_names_list = get_image_names_from_zip(ZIP_PATH)
@@ -116,7 +106,7 @@ if not image_names_list:
 selected_image_name = st.selectbox(
     "이미지 선택:",
     image_names_list,
-    index=0 # 기본값 설정
+    index=0
 )
 
 if st.button("불량 여부 판별"): 
