@@ -6,6 +6,23 @@ from PIL import Image, ImageFilter
 import numpy as np
 from pathlib import Path
 
+DATASET_URL = "https://data.vicos.si/datasets/KSDD/KolektorSDD.zip"
+ZIP_PATH = Path("/content/KolektorSDD.zip")
+if not ZIP_PATH.exists():
+    urllib.request.urlretrieve(DATASET_URL, ZIP_PATH)
+
+with zipfile.ZipFile(ZIP_PATH) as archive:
+    image_names = sorted(
+        name for name in archive.namelist()
+        if name.lower().endswith(".jpg")
+    )
+    mask_names = sorted(
+        name for name in archive.namelist()
+        if name.lower().endswith(".bmp")
+    )
+print("원본 이미지:", len(image_names))
+print("정밀 마스크:", len(mask_names))
+
 # --- 1. 모델 및 데이터 경로 설정 ---
 # 깃헙 저장소의 최상단(root)에 파일이 있다고 가정하고 상대 경로로 수정합니다.
 MODEL_PATH = Path("lesson06_vision_model.joblib")
